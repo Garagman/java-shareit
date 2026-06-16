@@ -13,22 +13,22 @@ public class ErrorHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationErrors(MethodArgumentNotValidException e) {
-        return Map.of("error", e.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
-                .reduce((a, b) -> a + "; " + b)
+    public Map<String, String> handleValidationErrors(MethodArgumentNotValidException exception) {
+        return Map.of("error", exception.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .reduce((firstMessage, secondMessage) -> firstMessage + "; " + secondMessage)
                 .orElse("Validation error"));
     }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleNotFound(final RuntimeException e) {
-        return Map.of("error", e.getMessage());
+    public Map<String, String> handleNotFound(final RuntimeException exception) {
+        return Map.of("error", exception.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleConflict(final RuntimeException e) {
-        return Map.of("error", e.getMessage());
+    public Map<String, String> handleConflict(final RuntimeException exception) {
+        return Map.of("error", exception.getMessage());
     }
 }
