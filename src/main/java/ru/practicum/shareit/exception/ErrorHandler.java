@@ -31,4 +31,10 @@ public class ErrorHandler {
     public Map<String, String> handleConflict(final RuntimeException exception) {
         return Map.of("error", exception.getMessage());
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleIllegalArgument(final IllegalArgumentException exception) {
+        return Map.of("error", exception.getMessage());
+    }
 }
