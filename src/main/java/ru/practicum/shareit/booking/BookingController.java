@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.util.HeaderConstants;
 
 import java.util.List;
 
@@ -25,25 +26,25 @@ public class BookingController {
 
     @PostMapping
     public BookingDto create(@RequestBody BookingDto bookingDto,
-                             @RequestHeader("X-Sharer-User-Id") Long bookerId) {
+                             @RequestHeader(HeaderConstants.USER_ID_HEADER) Long bookerId) {
         return bookingService.create(bookingDto, bookerId);
     }
 
     @PatchMapping("/{bookingId}")
     public BookingDto updateStatus(@PathVariable Long bookingId,
-                                   @RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                   @RequestHeader(HeaderConstants.USER_ID_HEADER) Long ownerId,
                                    @RequestParam("approved") Boolean approved) {
         return bookingService.updateStatus(bookingId, ownerId, approved);
     }
 
     @GetMapping("/{bookingId}")
     public BookingDto findById(@PathVariable Long bookingId,
-                               @RequestHeader("X-Sharer-User-Id") Long userId) {
+                               @RequestHeader(HeaderConstants.USER_ID_HEADER) Long userId) {
         return bookingService.findById(bookingId, userId);
     }
 
     @GetMapping
-    public List<BookingDto> findAllByBooker(@RequestHeader("X-Sharer-User-Id") Long bookerId,
+    public List<BookingDto> findAllByBooker(@RequestHeader(HeaderConstants.USER_ID_HEADER) Long bookerId,
                                             @RequestParam(defaultValue = "ALL") String state,
                                             @RequestParam(defaultValue = "0") int from,
                                             @RequestParam(defaultValue = "10") int size) {
@@ -52,7 +53,7 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> findAllByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+    public List<BookingDto> findAllByOwner(@RequestHeader(HeaderConstants.USER_ID_HEADER) Long ownerId,
                                            @RequestParam(defaultValue = "ALL") String state,
                                            @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size) {
