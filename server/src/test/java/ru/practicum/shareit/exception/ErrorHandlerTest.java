@@ -87,4 +87,5 @@ class ErrorHandlerTest {
 
         assertEquals("Invalid state", result.get("error"));
     }
+
 }
