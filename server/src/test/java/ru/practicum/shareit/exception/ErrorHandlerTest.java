@@ -60,4 +60,31 @@ class ErrorHandlerTest {
         assertNotNull(result);
         assertTrue(result.containsKey("error"));
     }
+
+    @Test
+    void handleNotFound_withDifferentMessage_shouldReturnCorrectMessage() {
+        RuntimeException exception = new NotFoundException("User not found");
+
+        Map<String, String> result = errorHandler.handleNotFound(exception);
+
+        assertEquals("User not found", result.get("error"));
+    }
+
+    @Test
+    void handleConflict_withDifferentMessage_shouldReturnCorrectMessage() {
+        RuntimeException exception = new ConflictException("Email already exists");
+
+        Map<String, String> result = errorHandler.handleConflict(exception);
+
+        assertEquals("Email already exists", result.get("error"));
+    }
+
+    @Test
+    void handleIllegalArgument_withDifferentMessage_shouldReturnCorrectMessage() {
+        IllegalArgumentException exception = new IllegalArgumentException("Invalid state");
+
+        Map<String, String> result = errorHandler.handleIllegalArgument(exception);
+
+        assertEquals("Invalid state", result.get("error"));
+    }
 }
