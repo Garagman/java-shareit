@@ -59,6 +59,8 @@ class ItemServiceImplTest {
         assertNotNull(createdItem);
         assertNotNull(createdItem.getId());
         assertEquals("Test Item", createdItem.getName());
+        assertEquals("Test Description", createdItem.getDescription());
+        assertTrue(createdItem.getAvailable());
     }
 
     @Test
@@ -85,6 +87,7 @@ class ItemServiceImplTest {
 
         assertNotNull(foundItem);
         assertEquals(createdItem.getId(), foundItem.getId());
+        assertEquals("Test Item", foundItem.getName());
     }
 
     @Test
@@ -110,7 +113,7 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void updateItem_shouldUpdateFields() {
+    void updateItem_shouldUpdateName() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Test Item");
         itemDto.setDescription("Test Description");
@@ -119,11 +122,47 @@ class ItemServiceImplTest {
 
         ItemDto updateDto = new ItemDto();
         updateDto.setName("Updated Name");
-        updateDto.setAvailable(false);
 
         ItemDto updatedItem = itemService.update(updateDto, createdItem.getId(), owner.getId());
 
         assertEquals("Updated Name", updatedItem.getName());
+        assertEquals("Test Description", updatedItem.getDescription());
+        assertTrue(updatedItem.getAvailable());
+    }
+
+    @Test
+    void updateItem_shouldUpdateDescription() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        ItemDto updateDto = new ItemDto();
+        updateDto.setDescription("Updated Description");
+
+        ItemDto updatedItem = itemService.update(updateDto, createdItem.getId(), owner.getId());
+
+        assertEquals("Test Item", updatedItem.getName());
+        assertEquals("Updated Description", updatedItem.getDescription());
+        assertTrue(updatedItem.getAvailable());
+    }
+
+    @Test
+    void updateItem_shouldUpdateAvailable() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        ItemDto updateDto = new ItemDto();
+        updateDto.setAvailable(false);
+
+        ItemDto updatedItem = itemService.update(updateDto, createdItem.getId(), owner.getId());
+
+        assertEquals("Test Item", updatedItem.getName());
+        assertEquals("Test Description", updatedItem.getDescription());
         assertFalse(updatedItem.getAvailable());
     }
 
@@ -140,6 +179,16 @@ class ItemServiceImplTest {
 
         assertThrows(NotFoundException.class, () -> {
             itemService.update(updateDto, createdItem.getId(), booker.getId());
+        });
+    }
+
+    @Test
+    void updateItem_withNonExistentId_shouldThrowNotFoundException() {
+        ItemDto updateDto = new ItemDto();
+        updateDto.setName("Updated Name");
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.update(updateDto, 999L, owner.getId());
         });
     }
 
@@ -177,14 +226,29 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void search_shouldReturnMatchingItems() {
+    void search_shouldReturnMatchingItemsByName() {
         ItemDto itemDto = new ItemDto();
-        itemDto.setName("Test Item");
+        itemDto.setName("Unique Test Item");
         itemDto.setDescription("Test Description");
         itemDto.setAvailable(true);
         itemService.create(itemDto, owner.getId(), null);
 
-        List<ItemDto> foundItems = itemService.search("Test", owner.getId());
+        List<ItemDto> foundItems = itemService.search("Unique", owner.getId());
+
+        assertNotNull(foundItems);
+        assertFalse(foundItems.isEmpty());
+        assertEquals("Unique Test Item", foundItems.get(0).getName());
+    }
+
+    @Test
+    void search_shouldReturnMatchingItemsByDescription() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Unique Description");
+        itemDto.setAvailable(true);
+        itemService.create(itemDto, owner.getId(), null);
+
+        List<ItemDto> foundItems = itemService.search("Unique", owner.getId());
 
         assertNotNull(foundItems);
         assertFalse(foundItems.isEmpty());
@@ -207,7 +271,15 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void addComment_withPastBooking_shouldReturnCommentDto() {
+    void search_withBlankText_shouldReturnEmptyList() {
+        List<ItemDto> foundItems = itemService.search("   ", owner.getId());
+
+        assertNotNull(foundItems);
+        assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void addComment_withPastApprovedBooking_shouldReturnCommentDto() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Test Item");
         itemDto.setDescription("Test Description");
@@ -229,6 +301,8 @@ class ItemServiceImplTest {
         assertNotNull(savedComment);
         assertNotNull(savedComment.getId());
         assertEquals("Great item!", savedComment.getText());
+        assertEquals("Test Booker", savedComment.getAuthorName());
+        assertNotNull(savedComment.getCreated());
     }
 
     @Test
@@ -264,6 +338,52 @@ class ItemServiceImplTest {
         itemDto.setDescription("Test Description");
         itemDto.setAvailable(true);
         ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Test comment");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            itemService.addComment(commentDto, createdItem.getId(), booker.getId());
+        });
+    }
+
+    @Test
+    void addComment_withFutureBooking_shouldThrowIllegalArgumentException() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(createdItem.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto createdBooking = bookingService.create(bookingDto, booker.getId());
+        bookingService.updateStatus(createdBooking.getId(), owner.getId(), true);
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Test comment");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            itemService.addComment(commentDto, createdItem.getId(), booker.getId());
+        });
+    }
+
+    @Test
+    void addComment_withRejectedBooking_shouldThrowIllegalArgumentException() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(createdItem.getId());
+        bookingDto.setStart(LocalDateTime.now().minusDays(2));
+        bookingDto.setEnd(LocalDateTime.now().minusDays(1));
+        BookingDto createdBooking = bookingService.create(bookingDto, booker.getId());
+        bookingService.updateStatus(createdBooking.getId(), owner.getId(), false);
 
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Test comment");
