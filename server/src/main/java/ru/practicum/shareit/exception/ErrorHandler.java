@@ -29,7 +29,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleIllegalArgument(final IllegalArgumentException e) {
         Map<String, String> response = new HashMap<>();
         response.put("error", e.getMessage());
@@ -37,7 +37,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleValidationErrors(final MethodArgumentNotValidException e) {
         Map<String, String> response = new HashMap<>();
         response.put("error", e.getBindingResult().getFieldErrors().stream()

@@ -41,7 +41,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Item with id " + bookingDto.getItemId() + " not found"));
 
         if (!item.getAvailable()) {
-            throw new IllegalArgumentException("Item with id " + item.getId() + " is not available for booking");
+            throw new NotFoundException("Item with id " + item.getId() + " is not available for booking");
         }
 
         if (item.getOwner().getId().equals(bookerId)) {
