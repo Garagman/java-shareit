@@ -11,51 +11,64 @@ public class ItemMapper {
         if (item == null) {
             return null;
         }
-        ItemDto itemDto = new ItemDto();
-        itemDto.setId(item.getId());
-        itemDto.setName(item.getName());
-        itemDto.setDescription(item.getDescription());
-        itemDto.setAvailable(item.getAvailable());
-        return itemDto;
+        ItemDto dto = new ItemDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setDescription(item.getDescription());
+        dto.setAvailable(item.getAvailable());
+        dto.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
+        return dto;
     }
 
     public static ItemDto toItemDto(Item item, ItemBookingInfo lastBooking, ItemBookingInfo nextBooking, List<CommentDto> comments) {
         if (item == null) {
             return null;
         }
-        ItemDto itemDto = new ItemDto();
-        itemDto.setId(item.getId());
-        itemDto.setName(item.getName());
-        itemDto.setDescription(item.getDescription());
-        itemDto.setAvailable(item.getAvailable());
-        itemDto.setLastBooking(lastBooking);
-        itemDto.setNextBooking(nextBooking);
-        itemDto.setComments(comments);
-        return itemDto;
+        ItemDto dto = new ItemDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setDescription(item.getDescription());
+        dto.setAvailable(item.getAvailable());
+        dto.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
+        dto.setLastBooking(lastBooking);
+        dto.setNextBooking(nextBooking);
+        dto.setComments(comments);
+        return dto;
     }
 
-    public static Item toItem(ItemDto itemDto, User owner) {
-        if (itemDto == null) {
+    public static ItemShortDto toItemShortDto(Item item) {
+        if (item == null) {
+            return null;
+        }
+        ItemShortDto dto = new ItemShortDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setOwnerId(item.getOwner().getId());
+        return dto;
+    }
+
+    public static Item toItem(ItemDto dto, User owner) {
+        if (dto == null) {
             return null;
         }
         Item item = new Item();
-        item.setId(itemDto.getId());
-        item.setName(itemDto.getName());
-        item.setDescription(itemDto.getDescription());
-        item.setAvailable(itemDto.getAvailable());
+        item.setId(dto.getId());
+        item.setName(dto.getName());
+        item.setDescription(dto.getDescription());
+        item.setAvailable(dto.getAvailable());
         item.setOwner(owner);
         return item;
     }
 
-    public static void updateItemFields(Item item, ItemDto itemDto) {
-        if (itemDto.getName() != null) {
-            item.setName(itemDto.getName());
+    public static void updateItemFields(Item item, ItemDto dto) {
+        if (dto.getName() != null) {
+            item.setName(dto.getName());
         }
-        if (itemDto.getDescription() != null) {
-            item.setDescription(itemDto.getDescription());
+        if (dto.getDescription() != null) {
+            item.setDescription(dto.getDescription());
         }
-        if (itemDto.getAvailable() != null) {
-            item.setAvailable(itemDto.getAvailable());
+        if (dto.getAvailable() != null) {
+            item.setAvailable(dto.getAvailable());
         }
     }
 }

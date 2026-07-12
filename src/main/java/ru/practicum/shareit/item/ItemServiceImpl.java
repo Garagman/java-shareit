@@ -12,6 +12,8 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserService;
 
@@ -30,23 +32,33 @@ public class ItemServiceImpl implements ItemService {
     private final UserService userService;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    private final ItemRequestRepository itemRequestRepository;
 
     public ItemServiceImpl(ItemRepository itemRepository,
                            UserService userService,
                            BookingRepository bookingRepository,
-                           CommentRepository commentRepository) {
+                           CommentRepository commentRepository,
+                           ItemRequestRepository itemRequestRepository) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.bookingRepository = bookingRepository;
         this.commentRepository = commentRepository;
+        this.itemRequestRepository = itemRequestRepository;
     }
 
     @Override
     @Transactional
-    public ItemDto create(ItemDto itemDto, Long ownerId) {
+    public ItemDto create(ItemDto itemDto, Long ownerId, Long requestId) {
         User owner = userService.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("User with id " + ownerId + " not found"));
         Item item = ItemMapper.toItem(itemDto, owner);
+
+        if (requestId != null) {
+            ItemRequest request = itemRequestRepository.findById(requestId)
+                    .orElseThrow(() -> new NotFoundException("Request with id " + requestId + " not found"));
+            item.setRequest(request);
+        }
+
         Item savedItem = itemRepository.save(item);
         return ItemMapper.toItemDto(savedItem);
     }
