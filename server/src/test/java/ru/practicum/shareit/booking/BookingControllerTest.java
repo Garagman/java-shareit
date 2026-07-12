@@ -96,4 +96,35 @@ class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L));
     }
+
+    @Test
+    void updateStatus_shouldReturnUpdatedBooking() throws Exception {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setId(1L);
+        bookingDto.setStatus("APPROVED");
+
+        when(bookingService.updateStatus(eq(1L), eq(1L), eq(true))).thenReturn(bookingDto);
+
+        mockMvc.perform(patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("approved", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
+    }
+
+    @Test
+    void findAllByOwner_shouldReturnBookingList() throws Exception {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setId(1L);
+        bookingDto.setStatus("WAITING");
+
+        when(bookingService.findAllByOwner(eq(1L), any(State.class), eq(0), eq(10)))
+                .thenReturn(Collections.singletonList(bookingDto));
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
 }

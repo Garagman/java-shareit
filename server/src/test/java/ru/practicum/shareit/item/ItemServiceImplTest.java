@@ -10,6 +10,8 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -120,5 +122,56 @@ class ItemServiceImplTest {
         assertThrows(NotFoundException.class, () -> {
             itemService.update(updateDto, createdItem.getId(), savedAnotherUser.getId());
         });
+    }
+
+    @Test
+    void findAllByOwnerId_shouldReturnItemList() {
+        ItemDto itemDto1 = new ItemDto();
+        itemDto1.setName("Item 1");
+        itemDto1.setDescription("Description 1");
+        itemDto1.setAvailable(true);
+        itemService.create(itemDto1, owner.getId(), null);
+
+        ItemDto itemDto2 = new ItemDto();
+        itemDto2.setName("Item 2");
+        itemDto2.setDescription("Description 2");
+        itemDto2.setAvailable(true);
+        itemService.create(itemDto2, owner.getId(), null);
+
+        List<ItemDto> items = itemService.findAllByOwnerId(owner.getId());
+
+        assertNotNull(items);
+        assertEquals(2, items.size());
+    }
+
+    @Test
+    void search_shouldReturnMatchingItems() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        itemService.create(itemDto, owner.getId(), null);
+
+        List<ItemDto> foundItems = itemService.search("Test", owner.getId());
+
+        assertNotNull(foundItems);
+        assertFalse(foundItems.isEmpty());
+        assertEquals("Test Item", foundItems.get(0).getName());
+    }
+
+    @Test
+    void search_withEmptyText_shouldReturnEmptyList() {
+        List<ItemDto> foundItems = itemService.search("", owner.getId());
+
+        assertNotNull(foundItems);
+        assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void search_withNullText_shouldReturnEmptyList() {
+        List<ItemDto> foundItems = itemService.search(null, owner.getId());
+
+        assertNotNull(foundItems);
+        assertTrue(foundItems.isEmpty());
     }
 }
