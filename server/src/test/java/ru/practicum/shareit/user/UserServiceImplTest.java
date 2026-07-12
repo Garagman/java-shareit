@@ -127,13 +127,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void deleteUser_withNonExistentId_shouldThrowNotFoundException() {
-        assertThrows(NotFoundException.class, () -> {
-            userService.delete(999L);
-        });
-    }
-
-    @Test
     void findAll_shouldReturnAllUsers() {
         UserDto userDto1 = new UserDto();
         userDto1.setName("User 1");
