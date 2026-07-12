@@ -41,11 +41,15 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Item with id " + bookingDto.getItemId() + " not found"));
 
         if (!item.getAvailable()) {
-            throw new NotFoundException("Item with id " + item.getId() + " is not available for booking");
+            throw new IllegalArgumentException("Item with id " + item.getId() + " is not available for booking");
         }
 
         if (item.getOwner().getId().equals(bookerId)) {
             throw new NotFoundException("User with id " + bookerId + " is the owner of item with id " + item.getId());
+        }
+
+        if (!bookingDto.getStart().isBefore(bookingDto.getEnd())) {
+            throw new IllegalArgumentException("Start date must be before end date");
         }
 
         Booking booking = BookingMapper.toBooking(bookingDto, item, booker);
@@ -60,7 +64,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking with id " + bookingId + " not found"));
 
         if (!booking.getItem().getOwner().getId().equals(ownerId)) {
-            throw new NotFoundException("User with id " + ownerId + " is not the owner of item");
+            throw new IllegalArgumentException("User with id " + ownerId + " is not the owner of item");
         }
 
         if (booking.getStatus() != BookingStatus.WAITING) {
