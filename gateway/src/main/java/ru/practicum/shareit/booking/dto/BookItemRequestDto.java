@@ -7,14 +7,16 @@ import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookItemRequestDto {
-	private long itemId;
-	@FutureOrPresent
-	private LocalDateTime start;
-	@Future
-	private LocalDateTime end;
+    private long itemId;
+    @FutureOrPresent
+    private LocalDateTime start;
+    @Future
+    private LocalDateTime end;
 }
