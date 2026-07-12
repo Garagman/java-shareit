@@ -266,4 +266,9 @@ class ItemServiceImplTest {
             itemService.addComment(commentDto, createdItem.getId(), savedAnotherUser.getId());
         });
     }
+
+    @Test
+    void constructor_shouldInitializeDependencies() {
+        assertNotNull(itemService);
+    }
 }
