@@ -10,17 +10,16 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemMapper;
-import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.util.HeaderConstants;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/items")
 public class ItemController {
+
     private final ItemService itemService;
 
     public ItemController(ItemService itemService) {
@@ -29,37 +28,38 @@ public class ItemController {
 
     @PostMapping
     public ItemDto create(@Valid @RequestBody ItemDto itemDto,
-                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        Item createdItem = itemService.create(itemDto, ownerId);
-        return ItemMapper.toItemDto(createdItem);
+                          @RequestHeader(HeaderConstants.USER_ID_HEADER) Long ownerId) {
+        return itemService.create(itemDto, ownerId);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto update(@PathVariable Long itemId,
                           @RequestBody ItemDto itemDto,
-                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        Item updatedItem = itemService.update(itemDto, itemId, ownerId);
-        return ItemMapper.toItemDto(updatedItem);
+                          @RequestHeader(HeaderConstants.USER_ID_HEADER) Long ownerId) {
+        return itemService.update(itemDto, itemId, ownerId);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> search(@RequestParam("text") String text) {
-        return itemService.search(text).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public List<ItemDto> search(@RequestParam("text") String text,
+                                @RequestHeader(HeaderConstants.USER_ID_HEADER) Long userId) {
+        return itemService.search(text, userId);
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto findById(@PathVariable Long itemId) {
-        Item item = itemService.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("Item with id " + itemId + " not found"));
-        return ItemMapper.toItemDto(item);
+    public ItemDto findById(@PathVariable Long itemId,
+                            @RequestHeader(HeaderConstants.USER_ID_HEADER) Long userId) {
+        return itemService.findById(itemId, userId);
     }
 
     @GetMapping
-    public List<ItemDto> findAllByOwnerId(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        return itemService.findAllByOwnerId(ownerId).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public List<ItemDto> findAllByOwnerId(@RequestHeader(HeaderConstants.USER_ID_HEADER) Long ownerId) {
+        return itemService.findAllByOwnerId(ownerId);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@PathVariable Long itemId,
+                                 @RequestBody CommentDto commentDto,
+                                 @RequestHeader(HeaderConstants.USER_ID_HEADER) Long authorId) {
+        return itemService.addComment(commentDto, itemId, authorId);
     }
 }
