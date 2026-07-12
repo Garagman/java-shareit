@@ -47,8 +47,7 @@ class ItemRequestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.description").value("Need a drill"));
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test

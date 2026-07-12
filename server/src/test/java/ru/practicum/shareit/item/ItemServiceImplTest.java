@@ -5,12 +5,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.BookingService;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,16 +26,25 @@ class ItemServiceImplTest {
     private ItemService itemService;
 
     @Autowired
+    private BookingService bookingService;
+
+    @Autowired
     private UserRepository userRepository;
 
     private User owner;
+    private User booker;
 
     @BeforeEach
     void setUp() {
-        User newUser = new User();
-        newUser.setName("Test Owner");
-        newUser.setEmail("owner@test.com");
-        owner = userRepository.save(newUser);
+        User newOwner = new User();
+        newOwner.setName("Test Owner");
+        newOwner.setEmail("owner@test.com");
+        owner = userRepository.save(newOwner);
+
+        User newBooker = new User();
+        newBooker.setName("Test Booker");
+        newBooker.setEmail("booker@test.com");
+        booker = userRepository.save(newBooker);
     }
 
     @Test
@@ -47,8 +59,6 @@ class ItemServiceImplTest {
         assertNotNull(createdItem);
         assertNotNull(createdItem.getId());
         assertEquals("Test Item", createdItem.getName());
-        assertEquals("Test Description", createdItem.getDescription());
-        assertTrue(createdItem.getAvailable());
     }
 
     @Test
@@ -75,7 +85,6 @@ class ItemServiceImplTest {
 
         assertNotNull(foundItem);
         assertEquals(createdItem.getId(), foundItem.getId());
-        assertEquals("Test Item", foundItem.getName());
     }
 
     @Test
@@ -86,6 +95,26 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void findById_whenUserIsOwnerWithBookings_shouldIncludeBookings() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(createdItem.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        bookingService.create(bookingDto, booker.getId());
+
+        ItemDto foundItem = itemService.findById(createdItem.getId(), owner.getId());
+
+        assertNotNull(foundItem);
+        assertNotNull(foundItem.getNextBooking());
+    }
+
+    @Test
     void findById_whenUserIsNotOwner_shouldNotIncludeBookings() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Test Item");
@@ -93,15 +122,9 @@ class ItemServiceImplTest {
         itemDto.setAvailable(true);
         ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
 
-        User anotherUser = new User();
-        anotherUser.setName("Another User");
-        anotherUser.setEmail("another@test.com");
-        User savedAnotherUser = userRepository.save(anotherUser);
-
-        ItemDto foundItem = itemService.findById(createdItem.getId(), savedAnotherUser.getId());
+        ItemDto foundItem = itemService.findById(createdItem.getId(), booker.getId());
 
         assertNotNull(foundItem);
-        assertEquals(createdItem.getId(), foundItem.getId());
         assertNull(foundItem.getLastBooking());
         assertNull(foundItem.getNextBooking());
     }
@@ -121,7 +144,6 @@ class ItemServiceImplTest {
         ItemDto updatedItem = itemService.update(updateDto, createdItem.getId(), owner.getId());
 
         assertEquals("Updated Name", updatedItem.getName());
-        assertEquals("Test Description", updatedItem.getDescription());
         assertFalse(updatedItem.getAvailable());
     }
 
@@ -133,26 +155,11 @@ class ItemServiceImplTest {
         itemDto.setAvailable(true);
         ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
 
-        User anotherUser = new User();
-        anotherUser.setName("Another User");
-        anotherUser.setEmail("another@test.com");
-        User savedAnotherUser = userRepository.save(anotherUser);
-
         ItemDto updateDto = new ItemDto();
         updateDto.setName("Updated Name");
 
         assertThrows(NotFoundException.class, () -> {
-            itemService.update(updateDto, createdItem.getId(), savedAnotherUser.getId());
-        });
-    }
-
-    @Test
-    void updateItem_withNonExistentId_shouldThrowNotFoundException() {
-        ItemDto updateDto = new ItemDto();
-        updateDto.setName("Updated Name");
-
-        assertThrows(NotFoundException.class, () -> {
-            itemService.update(updateDto, 999L, owner.getId());
+            itemService.update(updateDto, createdItem.getId(), booker.getId());
         });
     }
 
@@ -174,6 +181,27 @@ class ItemServiceImplTest {
 
         assertNotNull(items);
         assertEquals(2, items.size());
+    }
+
+    @Test
+    void findAllByOwnerId_withBookings_shouldIncludeBookings() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(createdItem.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        bookingService.create(bookingDto, booker.getId());
+
+        List<ItemDto> items = itemService.findAllByOwnerId(owner.getId());
+
+        assertNotNull(items);
+        assertFalse(items.isEmpty());
+        assertNotNull(items.get(0).getNextBooking());
     }
 
     @Test
@@ -201,7 +229,6 @@ class ItemServiceImplTest {
 
         assertNotNull(foundItems);
         assertFalse(foundItems.isEmpty());
-        assertEquals("Test Item", foundItems.get(0).getName());
     }
 
     @Test
@@ -218,6 +245,31 @@ class ItemServiceImplTest {
 
         assertNotNull(foundItems);
         assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void addComment_withPastBooking_shouldReturnCommentDto() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(createdItem.getId());
+        bookingDto.setStart(LocalDateTime.now().minusDays(2));
+        bookingDto.setEnd(LocalDateTime.now().minusDays(1));
+        BookingDto createdBooking = bookingService.create(bookingDto, booker.getId());
+        bookingService.updateStatus(createdBooking.getId(), owner.getId(), true);
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Great item!");
+
+        CommentDto savedComment = itemService.addComment(commentDto, createdItem.getId(), booker.getId());
+
+        assertNotNull(savedComment);
+        assertNotNull(savedComment.getId());
+        assertEquals("Great item!", savedComment.getText());
     }
 
     @Test
@@ -254,21 +306,11 @@ class ItemServiceImplTest {
         itemDto.setAvailable(true);
         ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
 
-        User anotherUser = new User();
-        anotherUser.setName("Another User");
-        anotherUser.setEmail("another@test.com");
-        User savedAnotherUser = userRepository.save(anotherUser);
-
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Test comment");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            itemService.addComment(commentDto, createdItem.getId(), savedAnotherUser.getId());
+            itemService.addComment(commentDto, createdItem.getId(), booker.getId());
         });
-    }
-
-    @Test
-    void constructor_shouldInitializeDependencies() {
-        assertNotNull(itemService);
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.exception.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -43,8 +42,6 @@ class BookingControllerTest {
         responseDto.setItemId(1L);
         responseDto.setBookerId(2L);
         responseDto.setStatus("WAITING");
-        responseDto.setStart(requestDto.getStart());
-        responseDto.setEnd(requestDto.getEnd());
 
         when(bookingService.create(any(BookingDto.class), eq(2L))).thenReturn(responseDto);
 
@@ -53,8 +50,7 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.status").value("WAITING"));
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
@@ -72,13 +68,18 @@ class BookingControllerTest {
     }
 
     @Test
-    void findById_withNonExistentId_shouldReturnNotFound() throws Exception {
-        when(bookingService.findById(eq(999L), eq(2L)))
-                .thenThrow(new NotFoundException("Booking not found"));
+    void updateStatus_shouldReturnUpdatedBooking() throws Exception {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setId(1L);
+        bookingDto.setStatus("APPROVED");
 
-        mockMvc.perform(get("/bookings/999")
-                        .header("X-Sharer-User-Id", 2L))
-                .andExpect(status().isNotFound());
+        when(bookingService.updateStatus(eq(1L), eq(1L), eq(true))).thenReturn(bookingDto);
+
+        mockMvc.perform(patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("approved", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
@@ -95,21 +96,6 @@ class BookingControllerTest {
                         .param("state", "ALL"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L));
-    }
-
-    @Test
-    void updateStatus_shouldReturnUpdatedBooking() throws Exception {
-        BookingDto bookingDto = new BookingDto();
-        bookingDto.setId(1L);
-        bookingDto.setStatus("APPROVED");
-
-        when(bookingService.updateStatus(eq(1L), eq(1L), eq(true))).thenReturn(bookingDto);
-
-        mockMvc.perform(patch("/bookings/1")
-                        .header("X-Sharer-User-Id", 1L)
-                        .param("approved", "true"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test

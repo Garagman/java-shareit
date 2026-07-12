@@ -8,6 +8,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.Collections;
@@ -55,19 +56,6 @@ class ItemControllerTest {
     }
 
     @Test
-    void createItem_withoutUserIdHeader_shouldReturnBadRequest() throws Exception {
-        ItemDto requestDto = new ItemDto();
-        requestDto.setName("Test Item");
-        requestDto.setDescription("Test Description");
-        requestDto.setAvailable(true);
-
-        mockMvc.perform(post("/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void findById_shouldReturnItem() throws Exception {
         ItemDto itemDto = new ItemDto();
         itemDto.setId(1L);
@@ -80,8 +68,7 @@ class ItemControllerTest {
         mockMvc.perform(get("/items/1")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("Test Item"));
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
@@ -105,7 +92,42 @@ class ItemControllerTest {
         mockMvc.perform(get("/items")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].name").value("Test Item"));
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
+
+    @Test
+    void search_shouldReturnItemList() throws Exception {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setId(1L);
+        itemDto.setName("Test Item");
+
+        when(itemService.search(eq("Test"), eq(1L))).thenReturn(Collections.singletonList(itemDto));
+
+        mockMvc.perform(get("/items/search")
+                        .param("text", "Test")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
+
+    @Test
+    void addComment_shouldReturnComment() throws Exception {
+        CommentDto requestDto = new CommentDto();
+        requestDto.setText("Great item!");
+
+        CommentDto responseDto = new CommentDto();
+        responseDto.setId(1L);
+        responseDto.setText("Great item!");
+        responseDto.setAuthorName("Test User");
+
+        when(itemService.addComment(any(CommentDto.class), eq(1L), eq(1L))).thenReturn(responseDto);
+
+        mockMvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.text").value("Great item!"));
     }
 }

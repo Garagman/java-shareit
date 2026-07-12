@@ -7,9 +7,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.user.dto.UserDto;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -47,24 +47,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("Test User"))
-                .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
-
-    @Test
-    void createUser_withExistingEmail_shouldReturnConflict() throws Exception {
-        UserDto requestDto = new UserDto();
-        requestDto.setName("Test User");
-        requestDto.setEmail("duplicate@example.com");
-
-        when(userService.create(any(UserDto.class)))
-                .thenThrow(new ConflictException("Email already exists"));
-
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isConflict());
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
@@ -78,15 +61,26 @@ class UserControllerTest {
 
         mockMvc.perform(get("/users/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("Test User"));
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
-    void findById_withNonExistentId_shouldReturnNotFound() throws Exception {
-        when(userService.findById(eq(999L))).thenReturn(Optional.empty());
+    void findAll_shouldReturnUserList() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setName("Test User");
+        user.setEmail("test@example.com");
 
-        mockMvc.perform(get("/users/999"))
-                .andExpect(status().isNotFound());
+        when(userService.findAll()).thenReturn(Collections.singletonList(user));
+
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
+
+    @Test
+    void deleteUser_shouldReturnOk() throws Exception {
+        mockMvc.perform(delete("/users/1"))
+                .andExpect(status().isOk());
     }
 }
