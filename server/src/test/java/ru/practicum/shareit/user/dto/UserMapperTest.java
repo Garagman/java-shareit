@@ -52,6 +52,22 @@ class UserMapperTest {
     }
 
     @Test
+    void updateUserFields_withNullName_shouldNotUpdateName() {
+        User user = new User();
+        user.setId(1L);
+        user.setName("Old Name");
+        user.setEmail("old@example.com");
+
+        UserDto updateDto = new UserDto();
+        updateDto.setEmail("new@example.com");
+
+        UserMapper.updateUserFields(user, updateDto);
+
+        assertEquals("Old Name", user.getName());
+        assertEquals("new@example.com", user.getEmail());
+    }
+
+    @Test
     void toUserDto_withNull_shouldReturnNull() {
         assertNull(UserMapper.toUserDto(null));
     }

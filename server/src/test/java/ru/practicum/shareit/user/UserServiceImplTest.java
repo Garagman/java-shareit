@@ -5,7 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,6 +67,36 @@ class UserServiceImplTest {
     }
 
     @Test
+    void updateUser_withExistingEmail_shouldThrowConflictException() {
+        UserDto userDto1 = new UserDto();
+        userDto1.setName("User 1");
+        userDto1.setEmail("user1@example.com");
+        User user1 = userService.create(userDto1);
+
+        UserDto userDto2 = new UserDto();
+        userDto2.setName("User 2");
+        userDto2.setEmail("user2@example.com");
+        User user2 = userService.create(userDto2);
+
+        UserDto updateDto = new UserDto();
+        updateDto.setEmail("user1@example.com");
+
+        assertThrows(ConflictException.class, () -> {
+            userService.update(updateDto, user2.getId());
+        });
+    }
+
+    @Test
+    void updateUser_withNonExistentId_shouldThrowNotFoundException() {
+        UserDto updateDto = new UserDto();
+        updateDto.setName("Updated Name");
+
+        assertThrows(NotFoundException.class, () -> {
+            userService.update(updateDto, 999L);
+        });
+    }
+
+    @Test
     void findById_shouldReturnUser() {
         UserDto userDto = new UserDto();
         userDto.setName("Test User");
@@ -79,5 +112,42 @@ class UserServiceImplTest {
     @Test
     void findById_withNonExistentId_shouldReturnEmpty() {
         assertTrue(userService.findById(999L).isEmpty());
+    }
+
+    @Test
+    void deleteUser_shouldRemoveUser() {
+        UserDto userDto = new UserDto();
+        userDto.setName("Test User");
+        userDto.setEmail("test@example.com");
+        User createdUser = userService.create(userDto);
+
+        userService.delete(createdUser.getId());
+
+        assertTrue(userService.findById(createdUser.getId()).isEmpty());
+    }
+
+    @Test
+    void deleteUser_withNonExistentId_shouldThrowNotFoundException() {
+        assertThrows(NotFoundException.class, () -> {
+            userService.delete(999L);
+        });
+    }
+
+    @Test
+    void findAll_shouldReturnAllUsers() {
+        UserDto userDto1 = new UserDto();
+        userDto1.setName("User 1");
+        userDto1.setEmail("user1@example.com");
+        userService.create(userDto1);
+
+        UserDto userDto2 = new UserDto();
+        userDto2.setName("User 2");
+        userDto2.setEmail("user2@example.com");
+        userService.create(userDto2);
+
+        List<User> users = userService.findAll();
+
+        assertNotNull(users);
+        assertTrue(users.size() >= 2);
     }
 }

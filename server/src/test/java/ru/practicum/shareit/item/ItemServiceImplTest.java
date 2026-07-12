@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
@@ -85,6 +86,27 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void findById_whenUserIsNotOwner_shouldNotIncludeBookings() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        User anotherUser = new User();
+        anotherUser.setName("Another User");
+        anotherUser.setEmail("another@test.com");
+        User savedAnotherUser = userRepository.save(anotherUser);
+
+        ItemDto foundItem = itemService.findById(createdItem.getId(), savedAnotherUser.getId());
+
+        assertNotNull(foundItem);
+        assertEquals(createdItem.getId(), foundItem.getId());
+        assertNull(foundItem.getLastBooking());
+        assertNull(foundItem.getNextBooking());
+    }
+
+    @Test
     void updateItem_shouldUpdateFields() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Test Item");
@@ -125,6 +147,16 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void updateItem_withNonExistentId_shouldThrowNotFoundException() {
+        ItemDto updateDto = new ItemDto();
+        updateDto.setName("Updated Name");
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.update(updateDto, 999L, owner.getId());
+        });
+    }
+
+    @Test
     void findAllByOwnerId_shouldReturnItemList() {
         ItemDto itemDto1 = new ItemDto();
         itemDto1.setName("Item 1");
@@ -142,6 +174,19 @@ class ItemServiceImplTest {
 
         assertNotNull(items);
         assertEquals(2, items.size());
+    }
+
+    @Test
+    void findAllByOwnerId_withNoItems_shouldReturnEmptyList() {
+        User newUser = new User();
+        newUser.setName("User Without Items");
+        newUser.setEmail("noitems@test.com");
+        User savedUser = userRepository.save(newUser);
+
+        List<ItemDto> items = itemService.findAllByOwnerId(savedUser.getId());
+
+        assertNotNull(items);
+        assertTrue(items.isEmpty());
     }
 
     @Test
@@ -173,5 +218,52 @@ class ItemServiceImplTest {
 
         assertNotNull(foundItems);
         assertTrue(foundItems.isEmpty());
+    }
+
+    @Test
+    void addComment_withNonExistentItem_shouldThrowNotFoundException() {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Test comment");
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.addComment(commentDto, 999L, owner.getId());
+        });
+    }
+
+    @Test
+    void addComment_withNonExistentAuthor_shouldThrowNotFoundException() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Test comment");
+
+        assertThrows(NotFoundException.class, () -> {
+            itemService.addComment(commentDto, createdItem.getId(), 999L);
+        });
+    }
+
+    @Test
+    void addComment_withoutPastBooking_shouldThrowIllegalArgumentException() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Item");
+        itemDto.setDescription("Test Description");
+        itemDto.setAvailable(true);
+        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
+
+        User anotherUser = new User();
+        anotherUser.setName("Another User");
+        anotherUser.setEmail("another@test.com");
+        User savedAnotherUser = userRepository.save(anotherUser);
+
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Test comment");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            itemService.addComment(commentDto, createdItem.getId(), savedAnotherUser.getId());
+        });
     }
 }
