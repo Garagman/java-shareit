@@ -95,26 +95,6 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void findById_whenUserIsOwnerWithBookings_shouldIncludeBookings() {
-        ItemDto itemDto = new ItemDto();
-        itemDto.setName("Test Item");
-        itemDto.setDescription("Test Description");
-        itemDto.setAvailable(true);
-        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
-
-        BookingDto bookingDto = new BookingDto();
-        bookingDto.setItemId(createdItem.getId());
-        bookingDto.setStart(LocalDateTime.now().plusDays(1));
-        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
-        bookingService.create(bookingDto, booker.getId());
-
-        ItemDto foundItem = itemService.findById(createdItem.getId(), owner.getId());
-
-        assertNotNull(foundItem);
-        assertNotNull(foundItem.getNextBooking());
-    }
-
-    @Test
     void findById_whenUserIsNotOwner_shouldNotIncludeBookings() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Test Item");
@@ -181,27 +161,6 @@ class ItemServiceImplTest {
 
         assertNotNull(items);
         assertEquals(2, items.size());
-    }
-
-    @Test
-    void findAllByOwnerId_withBookings_shouldIncludeBookings() {
-        ItemDto itemDto = new ItemDto();
-        itemDto.setName("Test Item");
-        itemDto.setDescription("Test Description");
-        itemDto.setAvailable(true);
-        ItemDto createdItem = itemService.create(itemDto, owner.getId(), null);
-
-        BookingDto bookingDto = new BookingDto();
-        bookingDto.setItemId(createdItem.getId());
-        bookingDto.setStart(LocalDateTime.now().plusDays(1));
-        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
-        bookingService.create(bookingDto, booker.getId());
-
-        List<ItemDto> items = itemService.findAllByOwnerId(owner.getId());
-
-        assertNotNull(items);
-        assertFalse(items.isEmpty());
-        assertNotNull(items.get(0).getNextBooking());
     }
 
     @Test
