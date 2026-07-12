@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +38,7 @@ class ItemRequestControllerTest {
         ItemRequestDto responseDto = new ItemRequestDto();
         responseDto.setId(1L);
         responseDto.setDescription("Need a drill");
+        responseDto.setCreated(LocalDateTime.now());
 
         when(requestService.create(any(ItemRequestDto.class), eq(1L))).thenReturn(responseDto);
 
@@ -54,6 +56,7 @@ class ItemRequestControllerTest {
         ItemRequestDto requestDto = new ItemRequestDto();
         requestDto.setId(1L);
         requestDto.setDescription("Need a drill");
+        requestDto.setCreated(LocalDateTime.now());
 
         when(requestService.findAllByRequester(eq(1L)))
                 .thenReturn(Collections.singletonList(requestDto));
@@ -65,10 +68,27 @@ class ItemRequestControllerTest {
     }
 
     @Test
+    void findAllNotByRequester_shouldReturnRequestList() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto();
+        requestDto.setId(1L);
+        requestDto.setDescription("Need a drill");
+        requestDto.setCreated(LocalDateTime.now());
+
+        when(requestService.findAllNotByRequester(eq(1L)))
+                .thenReturn(Collections.singletonList(requestDto));
+
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+    }
+
+    @Test
     void findById_shouldReturnRequest() throws Exception {
         ItemRequestDto requestDto = new ItemRequestDto();
         requestDto.setId(1L);
         requestDto.setDescription("Need a drill");
+        requestDto.setCreated(LocalDateTime.now());
 
         when(requestService.findById(eq(1L), eq(1L))).thenReturn(requestDto);
 

@@ -58,6 +58,14 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
+    void findAllNotByRequester_shouldReturnEmptyList() {
+        var requests = requestService.findAllNotByRequester(requester.getId());
+
+        assertNotNull(requests);
+        assertTrue(requests.isEmpty());
+    }
+
+    @Test
     void findById_shouldReturnRequest() {
         ItemRequestDto requestDto = new ItemRequestDto();
         requestDto.setDescription("Need a drill");
