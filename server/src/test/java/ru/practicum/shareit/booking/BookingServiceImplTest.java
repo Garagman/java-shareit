@@ -81,7 +81,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_withUnavailableItem_shouldThrowNotFoundException() {
+    void createBooking_withUnavailableItem_shouldThrowIllegalArgumentException() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Unavailable Item");
         itemDto.setDescription("Description");
@@ -93,7 +93,7 @@ class BookingServiceImplTest {
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
 
-        assertThrows(NotFoundException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             bookingService.create(bookingDto, booker.getId());
         });
     }
@@ -178,14 +178,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateStatus_withNonOwner_shouldThrowNotFoundException() {
+    void updateStatus_withNonOwner_shouldThrowIllegalArgumentException() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
         BookingDto createdBooking = bookingService.create(bookingDto, booker.getId());
 
-        assertThrows(NotFoundException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             bookingService.updateStatus(createdBooking.getId(), booker.getId(), true);
         });
     }
