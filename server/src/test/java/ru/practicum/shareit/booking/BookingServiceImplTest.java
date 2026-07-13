@@ -54,7 +54,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_shouldReturnBookingDto() {
+    void create_shouldReturnDto() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -69,7 +69,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_withNonExistentItem_shouldThrowNotFoundException() {
+    void create_withNonExistentItem_shouldThrow() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(999L);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -81,7 +81,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_withUnavailableItem_shouldThrowIllegalArgumentException() {
+    void create_withUnavailableItem_shouldThrow() {
         ItemDto itemDto = new ItemDto();
         itemDto.setName("Unavailable Item");
         itemDto.setDescription("Description");
@@ -99,7 +99,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void createBooking_byOwner_shouldThrowNotFoundException() {
+    void create_byOwner_shouldThrow() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -111,7 +111,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findById_shouldReturnBooking() {
+    void findById_shouldReturn() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -125,14 +125,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findById_withNonExistentId_shouldThrowNotFoundException() {
+    void findById_withNonExistentId_shouldThrow() {
         assertThrows(NotFoundException.class, () -> {
             bookingService.findById(999L, booker.getId());
         });
     }
 
     @Test
-    void findById_withNonBookerAndNonOwner_shouldThrowNotFoundException() {
+    void findById_withNoAccess_shouldThrow() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -150,7 +150,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateStatus_approve_shouldReturnApprovedBooking() {
+    void updateStatus_approve() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -164,7 +164,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateStatus_reject_shouldReturnRejectedBooking() {
+    void updateStatus_reject() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -178,7 +178,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateStatus_withNonOwner_shouldThrowIllegalArgumentException() {
+    void updateStatus_withNonOwner_shouldThrow() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -191,14 +191,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void updateStatus_withNonExistentId_shouldThrowNotFoundException() {
+    void updateStatus_withNonExistentId_shouldThrow() {
         assertThrows(NotFoundException.class, () -> {
             bookingService.updateStatus(999L, owner.getId(), true);
         });
     }
 
     @Test
-    void findAllByBooker_shouldReturnBookingList() {
+    void findAllByBooker_shouldReturnList() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -212,14 +212,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findAllByBooker_withNonExistentUser_shouldThrowNotFoundException() {
+    void findAllByBooker_withNonExistentUser_shouldThrow() {
         assertThrows(NotFoundException.class, () -> {
             bookingService.findAllByBooker(999L, State.ALL, 0, 10);
         });
     }
 
     @Test
-    void findAllByOwner_shouldReturnBookingList() {
+    void findAllByOwner_shouldReturnList() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
@@ -233,14 +233,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findAllByOwner_withNonExistentUser_shouldThrowNotFoundException() {
+    void findAllByOwner_withNonExistentUser_shouldThrow() {
         assertThrows(NotFoundException.class, () -> {
             bookingService.findAllByOwner(999L, State.ALL, 0, 10);
         });
     }
 
     @Test
-    void findAllByBooker_withCurrentState_shouldReturnBookings() {
+    void findAllByBooker_withCurrentState() {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setItemId(itemId);
         bookingDto.setStart(LocalDateTime.now().minusHours(1));
@@ -254,63 +254,63 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findAllByBooker_withPastState_shouldReturnBookings() {
+    void findAllByBooker_withPastState() {
         List<BookingDto> bookings = bookingService.findAllByBooker(booker.getId(), State.PAST, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByBooker_withFutureState_shouldReturnBookings() {
+    void findAllByBooker_withFutureState() {
         List<BookingDto> bookings = bookingService.findAllByBooker(booker.getId(), State.FUTURE, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByBooker_withWaitingState_shouldReturnBookings() {
+    void findAllByBooker_withWaitingState() {
         List<BookingDto> bookings = bookingService.findAllByBooker(booker.getId(), State.WAITING, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByBooker_withRejectedState_shouldReturnBookings() {
+    void findAllByBooker_withRejectedState() {
         List<BookingDto> bookings = bookingService.findAllByBooker(booker.getId(), State.REJECTED, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByOwner_withCurrentState_shouldReturnBookings() {
+    void findAllByOwner_withCurrentState() {
         List<BookingDto> bookings = bookingService.findAllByOwner(owner.getId(), State.CURRENT, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByOwner_withPastState_shouldReturnBookings() {
+    void findAllByOwner_withPastState() {
         List<BookingDto> bookings = bookingService.findAllByOwner(owner.getId(), State.PAST, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByOwner_withFutureState_shouldReturnBookings() {
+    void findAllByOwner_withFutureState() {
         List<BookingDto> bookings = bookingService.findAllByOwner(owner.getId(), State.FUTURE, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByOwner_withWaitingState_shouldReturnBookings() {
+    void findAllByOwner_withWaitingState() {
         List<BookingDto> bookings = bookingService.findAllByOwner(owner.getId(), State.WAITING, 0, 10);
 
         assertNotNull(bookings);
     }
 
     @Test
-    void findAllByOwner_withRejectedState_shouldReturnBookings() {
+    void findAllByOwner_withRejectedState() {
         List<BookingDto> bookings = bookingService.findAllByOwner(owner.getId(), State.REJECTED, 0, 10);
 
         assertNotNull(bookings);
